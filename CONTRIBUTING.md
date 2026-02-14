@@ -1,38 +1,41 @@
 # Contributing to OpenWork
 
-Thanks for your interest in contributing! OpenWork is an open-source project and we welcome contributions.
+Thanks for your interest in contributing! OpenWork is open-source and community-driven — every contribution matters.
 
-## Getting Started
+For the full contributing guide, see **[docs/contributing.md](docs/contributing.md)**.
 
-1. Fork and clone the repo
-2. Run `npm install` at the root
-3. Run `npx turbo build` to verify everything compiles
-4. Create a branch for your changes
-
-## Development
+## Quick Start
 
 ```bash
-npm install          # install all dependencies
-npx turbo build      # build all packages
-npx turbo dev        # start dev servers
+# Fork and clone
+git clone https://github.com/YOUR_USERNAME/openwork.git
+cd openwork
+
+# Install dependencies
+npm install
+
+# Build everything
+npm run build
+
+# Start development mode (watches for changes)
+npm run dev
 ```
 
-## Project Structure
+## What Can You Contribute?
 
-- `packages/cli` — CLI entry point (`openwork` command)
-- `packages/core` — Core engine (workspace generator, config, DB, approvals)
-- `packages/server` — Express.js backend API
-- `packages/wizard` — Setup wizard (React + Vite)
-- `packages/dashboard` — Management dashboard (React + Vite)
-- `packages/agents` — Role templates
+- 🐛 **Bug fixes** — Find something broken? Fix it and PR
+- 🧩 **New role templates** — See [docs/role-templates.md](docs/role-templates.md#creating-custom-templates)
+- 🔌 **New integrations** — See [docs/integrations.md](docs/integrations.md#adding-a-custom-mcp-server)
+- 📖 **Documentation** — Improvements, typo fixes, new guides
+- ✨ **Features** — Check [open issues](https://github.com/0xpratzyy/openwork/issues) for ideas
 
-## Pull Requests
+## PR Workflow
 
-- Keep PRs focused and small
-- Add tests for new functionality
-- Follow existing code style (Prettier + ESLint)
-- Update docs if needed
+1. Fork the repo
+2. Create a branch: `git checkout -b feat/your-feature`
+3. Make your changes
+4. Run `npm run build && npm run lint`
+5. Commit with a [conventional commit](https://www.conventionalcommits.org/) message
+6. Open a PR against `main`
 
-## License
-
-By contributing, you agree that your contributions will be licensed under the MIT License.
+→ [Full guide](docs/contributing.md)
