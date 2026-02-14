@@ -9,6 +9,8 @@ import { integrationsRouter } from './routes/integrations.js';
 import { agentsRouter } from './routes/agents.js';
 import { approvalsRouter } from './routes/approvals.js';
 import { statusRouter } from './routes/status.js';
+import { tasksRouter } from './routes/tasks.js';
+import { registryRouter } from './routes/registry.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -26,6 +28,8 @@ app.use('/api/integrations', integrationsRouter);
 app.use('/api/agents', agentsRouter);
 app.use('/api/approvals', approvalsRouter);
 app.use('/api/status', statusRouter);
+app.use('/api/tasks', tasksRouter);
+app.use('/api/registry', registryRouter);
 
 // Serve wizard static files
 const wizardDist = join(__dirname, '..', '..', 'wizard', 'dist');

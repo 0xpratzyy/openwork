@@ -1,0 +1,403 @@
+[
+  {
+    "id": "github",
+    "name": "GitHub",
+    "description": "Repository management, issues, pull requests, code review, and CI/CD workflows.",
+    "npmPackage": "@modelcontextprotocol/server-github",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "GITHUB_PERSONAL_ACCESS_TOKEN", "label": "GitHub Personal Access Token", "type": "password", "required": true, "placeholder": "ghp_..." }
+    ],
+    "tools": [
+      { "name": "create_or_update_file", "description": "Create or update a file in a repository" },
+      { "name": "search_repositories", "description": "Search for GitHub repositories" },
+      { "name": "create_issue", "description": "Create a new issue" },
+      { "name": "list_issues", "description": "List issues in a repository" },
+      { "name": "create_pull_request", "description": "Create a new pull request" },
+      { "name": "list_pull_requests", "description": "List pull requests" },
+      { "name": "get_file_contents", "description": "Read file contents from a repo" },
+      { "name": "push_files", "description": "Push multiple files in a single commit" },
+      { "name": "create_branch", "description": "Create a new branch" },
+      { "name": "fork_repository", "description": "Fork a repository" }
+    ],
+    "categories": ["engineering"],
+    "status": "verified",
+    "stars": 20000
+  },
+  {
+    "id": "linear",
+    "name": "Linear",
+    "description": "Issue tracking, sprint management, and project planning for engineering teams.",
+    "npmPackage": "@linear/mcp-server",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "LINEAR_API_KEY", "label": "Linear API Key", "type": "password", "required": true, "placeholder": "lin_api_..." }
+    ],
+    "tools": [
+      { "name": "linear_create_issue", "description": "Create a new Linear issue" },
+      { "name": "linear_search_issues", "description": "Search issues" },
+      { "name": "linear_update_issue", "description": "Update an existing issue" },
+      { "name": "linear_list_teams", "description": "List teams" },
+      { "name": "linear_get_issue", "description": "Get issue details" }
+    ],
+    "categories": ["engineering"],
+    "status": "verified",
+    "stars": 3500
+  },
+  {
+    "id": "sentry",
+    "name": "Sentry",
+    "description": "Error monitoring, performance tracking, and issue triaging.",
+    "npmPackage": "@sentry/mcp-server",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "SENTRY_AUTH_TOKEN", "label": "Sentry Auth Token", "type": "password", "required": true, "placeholder": "sntrys_..." },
+      { "field": "SENTRY_ORG", "label": "Sentry Organization Slug", "type": "text", "required": false, "placeholder": "my-org" }
+    ],
+    "tools": [
+      { "name": "sentry_list_issues", "description": "List unresolved Sentry issues" },
+      { "name": "sentry_get_issue", "description": "Get issue details with stack trace" },
+      { "name": "sentry_resolve_issue", "description": "Resolve a Sentry issue" },
+      { "name": "sentry_list_projects", "description": "List Sentry projects" }
+    ],
+    "categories": ["engineering"],
+    "status": "verified",
+    "stars": 1200
+  },
+  {
+    "id": "figma",
+    "name": "Figma",
+    "description": "Design file access, component inspection, and design token extraction.",
+    "npmPackage": "@anthropic/mcp-server-figma",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "FIGMA_ACCESS_TOKEN", "label": "Figma Access Token", "type": "password", "required": true, "placeholder": "figd_..." }
+    ],
+    "tools": [
+      { "name": "figma_get_file", "description": "Get a Figma file" },
+      { "name": "figma_get_node", "description": "Get a specific node from a file" },
+      { "name": "figma_get_images", "description": "Export images from a file" },
+      { "name": "figma_get_comments", "description": "Get comments on a file" }
+    ],
+    "categories": ["engineering", "marketing"],
+    "status": "community",
+    "stars": 800
+  },
+  {
+    "id": "google-analytics",
+    "name": "Google Analytics",
+    "description": "Website analytics, traffic reports, and conversion tracking.",
+    "githubRepo": "nicholasgriffintn/google-analytics-mcp-server",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "GA_PROPERTY_ID", "label": "GA4 Property ID", "type": "text", "required": true, "placeholder": "properties/123456" },
+      { "field": "GOOGLE_SERVICE_ACCOUNT_KEY", "label": "Service Account Key JSON", "type": "textarea", "required": true, "placeholder": "{...}" }
+    ],
+    "tools": [
+      { "name": "ga_run_report", "description": "Run a GA4 analytics report" },
+      { "name": "ga_get_realtime", "description": "Get real-time analytics data" }
+    ],
+    "categories": ["marketing"],
+    "status": "community",
+    "stars": 300
+  },
+  {
+    "id": "posthog",
+    "name": "PostHog",
+    "description": "Product analytics, feature flags, session recordings, and A/B testing.",
+    "githubRepo": "PostHog/posthog-mcp",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "POSTHOG_API_KEY", "label": "PostHog API Key", "type": "password", "required": true, "placeholder": "phx_..." },
+      { "field": "POSTHOG_HOST", "label": "PostHog Host", "type": "text", "required": false, "placeholder": "https://app.posthog.com" }
+    ],
+    "tools": [
+      { "name": "posthog_query", "description": "Run HogQL analytics queries" },
+      { "name": "posthog_list_events", "description": "List recent events" },
+      { "name": "posthog_get_feature_flags", "description": "Get feature flag status" }
+    ],
+    "categories": ["marketing", "engineering"],
+    "status": "community",
+    "stars": 500
+  },
+  {
+    "id": "notion",
+    "name": "Notion",
+    "description": "Knowledge base, documentation, wikis, and team notes.",
+    "npmPackage": "@notionhq/mcp-server",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "NOTION_API_KEY", "label": "Notion Integration Token", "type": "password", "required": true, "placeholder": "ntn_..." }
+    ],
+    "tools": [
+      { "name": "notion_search", "description": "Search Notion pages and databases" },
+      { "name": "notion_create_page", "description": "Create a new page" },
+      { "name": "notion_update_page", "description": "Update page properties" },
+      { "name": "notion_get_page", "description": "Get page content" },
+      { "name": "notion_query_database", "description": "Query a Notion database" }
+    ],
+    "categories": ["support", "ops", "engineering"],
+    "status": "verified",
+    "stars": 2500
+  },
+  {
+    "id": "hubspot",
+    "name": "HubSpot CRM",
+    "description": "Customer relationship management, deals, contacts, and sales pipeline.",
+    "githubRepo": "HubSpot/mcp-server-hubspot",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "HUBSPOT_ACCESS_TOKEN", "label": "HubSpot Access Token", "type": "password", "required": true, "placeholder": "pat-..." }
+    ],
+    "tools": [
+      { "name": "hubspot_search_contacts", "description": "Search CRM contacts" },
+      { "name": "hubspot_create_contact", "description": "Create a new contact" },
+      { "name": "hubspot_get_deals", "description": "List deals in pipeline" },
+      { "name": "hubspot_create_deal", "description": "Create a new deal" },
+      { "name": "hubspot_update_deal", "description": "Update deal stage or properties" },
+      { "name": "hubspot_list_companies", "description": "List companies" }
+    ],
+    "categories": ["sales"],
+    "status": "community",
+    "stars": 400
+  },
+  {
+    "id": "stripe",
+    "name": "Stripe",
+    "description": "Payment processing, subscriptions, invoices, and billing management.",
+    "npmPackage": "@stripe/mcp-server",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "STRIPE_SECRET_KEY", "label": "Stripe Secret Key", "type": "password", "required": true, "placeholder": "sk_..." }
+    ],
+    "tools": [
+      { "name": "stripe_list_customers", "description": "List Stripe customers" },
+      { "name": "stripe_create_invoice", "description": "Create a new invoice" },
+      { "name": "stripe_list_payments", "description": "List recent payments" },
+      { "name": "stripe_get_balance", "description": "Get account balance" },
+      { "name": "stripe_list_subscriptions", "description": "List active subscriptions" },
+      { "name": "stripe_create_refund", "description": "Create a refund" }
+    ],
+    "categories": ["ops", "sales"],
+    "status": "verified",
+    "stars": 1500
+  },
+  {
+    "id": "slack",
+    "name": "Slack",
+    "description": "Team messaging, channel management, and notifications.",
+    "npmPackage": "@anthropic/mcp-server-slack",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "SLACK_BOT_TOKEN", "label": "Slack Bot Token", "type": "password", "required": true, "placeholder": "xoxb-..." },
+      { "field": "SLACK_TEAM_ID", "label": "Slack Team ID", "type": "text", "required": false, "placeholder": "T0123456789" }
+    ],
+    "tools": [
+      { "name": "slack_post_message", "description": "Post a message to a channel" },
+      { "name": "slack_list_channels", "description": "List available channels" },
+      { "name": "slack_search_messages", "description": "Search messages" },
+      { "name": "slack_get_thread", "description": "Get thread replies" }
+    ],
+    "categories": ["engineering", "marketing", "sales", "support", "ops"],
+    "status": "verified",
+    "stars": 5000
+  },
+  {
+    "id": "discord",
+    "name": "Discord",
+    "description": "Community management, messaging, and bot interactions.",
+    "githubRepo": "v-3/discord-mcp",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "DISCORD_BOT_TOKEN", "label": "Discord Bot Token", "type": "password", "required": true, "placeholder": "" }
+    ],
+    "tools": [
+      { "name": "discord_send_message", "description": "Send a message to a channel" },
+      { "name": "discord_list_channels", "description": "List server channels" },
+      { "name": "discord_get_messages", "description": "Get recent messages" }
+    ],
+    "categories": ["support", "marketing"],
+    "status": "community",
+    "stars": 200
+  },
+  {
+    "id": "gmail",
+    "name": "Gmail / Google Workspace",
+    "description": "Email management, drafting, sending, and inbox organization.",
+    "npmPackage": "@anthropic/mcp-server-google-workspace",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "GOOGLE_CLIENT_ID", "label": "Google OAuth Client ID", "type": "text", "required": true, "placeholder": "" },
+      { "field": "GOOGLE_CLIENT_SECRET", "label": "Google OAuth Client Secret", "type": "password", "required": true, "placeholder": "" },
+      { "field": "GOOGLE_REFRESH_TOKEN", "label": "Google Refresh Token", "type": "password", "required": true, "placeholder": "" }
+    ],
+    "tools": [
+      { "name": "gmail_search", "description": "Search emails" },
+      { "name": "gmail_read", "description": "Read an email" },
+      { "name": "gmail_send", "description": "Send an email" },
+      { "name": "gmail_draft", "description": "Create an email draft" },
+      { "name": "gmail_list_labels", "description": "List Gmail labels" }
+    ],
+    "categories": ["support", "sales", "ops"],
+    "status": "verified",
+    "stars": 3000
+  },
+  {
+    "id": "google-drive",
+    "name": "Google Drive",
+    "description": "File storage, document management, and shared drive access.",
+    "npmPackage": "@anthropic/mcp-server-google-drive",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "GOOGLE_CLIENT_ID", "label": "Google OAuth Client ID", "type": "text", "required": true, "placeholder": "" },
+      { "field": "GOOGLE_CLIENT_SECRET", "label": "Google OAuth Client Secret", "type": "password", "required": true, "placeholder": "" },
+      { "field": "GOOGLE_REFRESH_TOKEN", "label": "Google Refresh Token", "type": "password", "required": true, "placeholder": "" }
+    ],
+    "tools": [
+      { "name": "drive_search", "description": "Search files in Drive" },
+      { "name": "drive_read", "description": "Read file contents" },
+      { "name": "drive_create", "description": "Create a new file" },
+      { "name": "drive_list", "description": "List files in a folder" }
+    ],
+    "categories": ["ops", "support"],
+    "status": "verified",
+    "stars": 2000
+  },
+  {
+    "id": "google-sheets",
+    "name": "Google Sheets",
+    "description": "Spreadsheet access, data analysis, and report generation.",
+    "githubRepo": "nicholasgriffintn/google-sheets-mcp-server",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "GOOGLE_CLIENT_ID", "label": "Google OAuth Client ID", "type": "text", "required": true, "placeholder": "" },
+      { "field": "GOOGLE_CLIENT_SECRET", "label": "Google OAuth Client Secret", "type": "password", "required": true, "placeholder": "" },
+      { "field": "GOOGLE_REFRESH_TOKEN", "label": "Google Refresh Token", "type": "password", "required": true, "placeholder": "" }
+    ],
+    "tools": [
+      { "name": "sheets_read", "description": "Read spreadsheet data" },
+      { "name": "sheets_write", "description": "Write data to a spreadsheet" },
+      { "name": "sheets_create", "description": "Create a new spreadsheet" }
+    ],
+    "categories": ["ops", "marketing", "sales"],
+    "status": "community",
+    "stars": 400
+  },
+  {
+    "id": "gitlab",
+    "name": "GitLab",
+    "description": "Repository management, merge requests, CI/CD pipelines, and issue tracking.",
+    "npmPackage": "@modelcontextprotocol/server-gitlab",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "GITLAB_PERSONAL_ACCESS_TOKEN", "label": "GitLab Access Token", "type": "password", "required": true, "placeholder": "glpat-..." },
+      { "field": "GITLAB_API_URL", "label": "GitLab API URL", "type": "text", "required": false, "placeholder": "https://gitlab.com/api/v4" }
+    ],
+    "tools": [
+      { "name": "gitlab_create_issue", "description": "Create a new issue" },
+      { "name": "gitlab_list_merge_requests", "description": "List merge requests" },
+      { "name": "gitlab_get_file", "description": "Get file contents" },
+      { "name": "gitlab_create_merge_request", "description": "Create a merge request" }
+    ],
+    "categories": ["engineering"],
+    "status": "verified",
+    "stars": 5000
+  },
+  {
+    "id": "jira",
+    "name": "Jira",
+    "description": "Project management, issue tracking, sprints, and agile workflows.",
+    "githubRepo": "nicholasgriffintn/jira-mcp-server",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "JIRA_URL", "label": "Jira Instance URL", "type": "text", "required": true, "placeholder": "https://yourteam.atlassian.net" },
+      { "field": "JIRA_EMAIL", "label": "Jira Email", "type": "text", "required": true, "placeholder": "user@company.com" },
+      { "field": "JIRA_API_TOKEN", "label": "Jira API Token", "type": "password", "required": true, "placeholder": "" }
+    ],
+    "tools": [
+      { "name": "jira_create_issue", "description": "Create a Jira issue" },
+      { "name": "jira_search", "description": "Search issues with JQL" },
+      { "name": "jira_update_issue", "description": "Update an issue" },
+      { "name": "jira_list_projects", "description": "List projects" }
+    ],
+    "categories": ["engineering"],
+    "status": "community",
+    "stars": 600
+  },
+  {
+    "id": "vercel",
+    "name": "Vercel",
+    "description": "Deployment management, serverless functions, and domain configuration.",
+    "githubRepo": "nicholasgriffintn/vercel-mcp-server",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "VERCEL_ACCESS_TOKEN", "label": "Vercel Access Token", "type": "password", "required": true, "placeholder": "" }
+    ],
+    "tools": [
+      { "name": "vercel_list_deployments", "description": "List recent deployments" },
+      { "name": "vercel_get_deployment", "description": "Get deployment details" },
+      { "name": "vercel_list_projects", "description": "List projects" },
+      { "name": "vercel_create_deployment", "description": "Trigger a new deployment" }
+    ],
+    "categories": ["engineering", "ops"],
+    "status": "community",
+    "stars": 350
+  },
+  {
+    "id": "supabase",
+    "name": "Supabase",
+    "description": "Database management, authentication, storage, and edge functions.",
+    "npmPackage": "@supabase/mcp-server",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "SUPABASE_URL", "label": "Supabase Project URL", "type": "text", "required": true, "placeholder": "https://xxx.supabase.co" },
+      { "field": "SUPABASE_SERVICE_ROLE_KEY", "label": "Service Role Key", "type": "password", "required": true, "placeholder": "eyJ..." }
+    ],
+    "tools": [
+      { "name": "supabase_query", "description": "Run a SQL query" },
+      { "name": "supabase_list_tables", "description": "List database tables" },
+      { "name": "supabase_get_schema", "description": "Get table schema" },
+      { "name": "supabase_manage_auth", "description": "Manage auth users" }
+    ],
+    "categories": ["engineering", "ops"],
+    "status": "verified",
+    "stars": 2000
+  },
+  {
+    "id": "salesforce",
+    "name": "Salesforce",
+    "description": "Enterprise CRM, lead management, opportunity tracking, and reporting.",
+    "githubRepo": "salesforce/mcp-server",
+    "transport": "stdio",
+    "configSchema": [
+      { "field": "SALESFORCE_INSTANCE_URL", "label": "Salesforce Instance URL", "type": "text", "required": true, "placeholder": "https://yourorg.salesforce.com" },
+      { "field": "SALESFORCE_ACCESS_TOKEN", "label": "Salesforce Access Token", "type": "password", "required": true, "placeholder": "" }
+    ],
+    "tools": [
+      { "name": "sf_query", "description": "Run a SOQL query" },
+      { "name": "sf_create_record", "description": "Create a new record" },
+      { "name": "sf_update_record", "description": "Update a record" },
+      { "name": "sf_search", "description": "Full-text search" }
+    ],
+    "categories": ["sales"],
+    "status": "community",
+    "stars": 300
+  },
+  {
+    "id": "zapier",
+    "name": "Zapier",
+    "description": "Workflow automation, app integrations, and trigger-based actions.",
+    "githubRepo": "zapier/mcp-server",
+    "transport": "sse",
+    "configSchema": [
+      { "field": "ZAPIER_MCP_URL", "label": "Zapier MCP Server URL", "type": "text", "required": true, "placeholder": "https://actions.zapier.com/mcp/..." }
+    ],
+    "tools": [
+      { "name": "zapier_run_action", "description": "Run a Zapier action" },
+      { "name": "zapier_list_actions", "description": "List available actions" }
+    ],
+    "categories": ["ops", "marketing", "sales"],
+    "status": "beta",
+    "stars": 200
+  }
+]

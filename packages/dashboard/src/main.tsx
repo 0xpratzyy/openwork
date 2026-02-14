@@ -7,7 +7,7 @@ import Agents from './pages/Agents';
 import Integrations from './pages/Integrations';
 import Approvals from './pages/Approvals';
 import Tasks from './pages/Tasks';
-import Logs from './pages/Logs';
+import Activity from './pages/Activity';
 import Settings from './pages/Settings';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -20,7 +20,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/integrations" element={<Integrations />} />
           <Route path="/approvals" element={<Approvals />} />
           <Route path="/tasks" element={<Tasks />} />
-          <Route path="/logs" element={<Logs />} />
+          <Route path="/activity" element={<Activity />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>
