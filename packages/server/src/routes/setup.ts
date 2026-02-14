@@ -16,6 +16,12 @@ interface SetupBody {
 
 setupRouter.post('/', async (req, res) => {
   const createdAgentIds: string[] = [];
+  const setupTimeout = setTimeout(() => {
+    if (!res.headersSent) {
+      res.status(504).json({ success: false, error: 'Setup timed out after 120 seconds. Check if OpenClaw is running.' });
+    }
+  }, 120000);
+
   try {
     const body = req.body as SetupBody;
     if (!body.roles || !Array.isArray(body.roles) || body.roles.length === 0) {
@@ -97,14 +103,18 @@ setupRouter.post('/', async (req, res) => {
 
     patchConfig(agentConfigs, bindingConfigs);
 
+    clearTimeout(setupTimeout);
     res.json({ success: true, agents: createdAgents });
   } catch (err) {
     // Rollback partially created agents
     for (const id of createdAgentIds) {
       try { deleteAgent(id); } catch { /* best effort */ }
     }
+    clearTimeout(setupTimeout);
     const message = err instanceof Error ? err.message : String(err);
-    res.status(500).json({ success: false, error: message });
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: message });
+    }
   }
 });
 

@@ -93,16 +93,31 @@ export default function SetupWizard() {
       await new Promise((r) => setTimeout(r, 300));
 
       push('Sending setup request...');
-      const result = await api.setup({ roles, integrations: state.integrationConfigs });
+      
+      // Timeout after 60s
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60000);
+      
+      let result;
+      try {
+        result = await api.setup({ roles, integrations: state.integrationConfigs });
+      } finally {
+        clearTimeout(timeout);
+      }
+
+      if (!result.success) {
+        throw new Error(result.error || 'Setup failed');
+      }
 
       push('Patching OpenClaw config...');
       await new Promise((r) => setTimeout(r, 300));
 
       push('Done!');
-      setState((s) => ({ ...s, progressDone: true, createdAgents: result.agents }));
+      setState((s) => ({ ...s, progressDone: true, createdAgents: result.agents, error: null }));
     } catch (err) {
-      push(`Error: ${err}`);
-      setState((s) => ({ ...s, error: String(err) }));
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      push(`Failed: ${errorMsg}`);
+      setState((s) => ({ ...s, error: errorMsg, progressDone: false }));
     }
   };
 
@@ -155,7 +170,17 @@ export default function SetupWizard() {
             <Progress
               messages={state.progressMessages}
               done={state.progressDone}
+              error={state.error}
               onNext={() => setStep(5)}
+              onRetry={() => {
+                setState((s) => ({
+                  ...s,
+                  step: 3,
+                  progressMessages: [],
+                  progressDone: false,
+                  error: null,
+                }));
+              }}
             />
           )}
           {state.step === 5 && (
