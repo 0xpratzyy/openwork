@@ -91,7 +91,7 @@ program
 
     console.log(chalk.cyan('\n🚀 Opening setup wizard in your browser...\n'));
 
-    const url = 'http://localhost:18800';
+    const url = 'http://localhost:18800/setup';
     try {
       const platform = process.platform;
       if (platform === 'darwin') execSync(`open ${url}`);

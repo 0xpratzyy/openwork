@@ -11,6 +11,7 @@ import { approvalsRouter } from './routes/approvals.js';
 import { statusRouter } from './routes/status.js';
 import { tasksRouter } from './routes/tasks.js';
 import { registryRouter } from './routes/registry.js';
+import { listAgents } from '@openwork/core';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,15 +32,37 @@ app.use('/api/status', statusRouter);
 app.use('/api/tasks', tasksRouter);
 app.use('/api/registry', registryRouter);
 
-// Serve wizard static files
+// Serve wizard at /setup
 const wizardDist = join(__dirname, '..', '..', 'wizard', 'dist');
 if (existsSync(wizardDist)) {
-  app.use('/', express.static(wizardDist));
-  // SPA fallback
-  app.get('/{*path}', (_req, res) => {
+  app.use('/setup', express.static(wizardDist));
+  app.get('/setup/{*path}', (_req, res) => {
     res.sendFile(join(wizardDist, 'index.html'));
   });
 }
+
+// Serve dashboard at /dashboard
+const dashboardDist = join(__dirname, '..', '..', 'dashboard', 'dist');
+if (existsSync(dashboardDist)) {
+  app.use('/dashboard', express.static(dashboardDist));
+  app.get('/dashboard/{*path}', (_req, res) => {
+    res.sendFile(join(dashboardDist, 'index.html'));
+  });
+}
+
+// Root redirect based on state
+app.get('/', (_req, res) => {
+  try {
+    const agents = listAgents();
+    if (agents.length > 0) {
+      res.redirect('/dashboard');
+    } else {
+      res.redirect('/setup');
+    }
+  } catch {
+    res.redirect('/setup');
+  }
+});
 
 // Error handling middleware
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
