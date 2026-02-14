@@ -11,7 +11,7 @@ export const agents = sqliteTable('agents', {
 
 export const integrations = sqliteTable('integrations', {
   id: text('id').primaryKey(),
-  agentId: text('agent_id').notNull().references(() => agents.id),
+  agentId: text('agent_id'),
   type: text('type').notNull(),
   configEncrypted: text('config_encrypted'),
   status: text('status').notNull().default('disconnected'),
