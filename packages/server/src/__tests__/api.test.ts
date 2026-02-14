@@ -7,6 +7,10 @@ vi.mock('@openwork/core', () => ({
   listAgents: vi.fn(() => []),
   deleteAgent: vi.fn(),
   removeAgent: vi.fn(async () => {}),
+  deleteAllAgents: vi.fn(),
+  deleteAllIntegrations: vi.fn(),
+  deleteIntegrationsByAgent: vi.fn(),
+  getAgentsByRole: vi.fn(() => []),
   listPendingApprovals: vi.fn(() => []),
   getApproval: vi.fn(() => null),
   dbResolveApproval: vi.fn(),
@@ -215,6 +219,24 @@ describe('Server API', () => {
       const res = await request(app).post('/api/setup').send({ roles: ['engineering'] });
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.agents)).toBe(true);
+    });
+  });
+
+  describe('POST /api/setup/reset', () => {
+    it('resets and returns removed count', async () => {
+      const res = await request(app).post('/api/setup/reset');
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(typeof res.body.removed).toBe('number');
+    });
+  });
+
+  describe('GET /api/status (existing setup detection)', () => {
+    it('returns agents array', async () => {
+      const res = await request(app).get('/api/status');
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('agents');
       expect(Array.isArray(res.body.agents)).toBe(true);
     });
   });

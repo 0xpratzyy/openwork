@@ -1,16 +1,37 @@
-import { useEffect } from 'react';
-import { Zap, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Zap, CheckCircle, XCircle, Loader2, AlertCircle } from 'lucide-react';
 
-interface Props {
-  status: { openclawRunning: boolean; agentCount: number; integrationCount: number } | null;
-  onLoad: () => void;
-  onNext: () => void;
+interface Agent {
+  id: string;
+  role: string;
+  name: string;
+  status: string;
 }
 
-export default function Welcome({ status, onLoad, onNext }: Props) {
+interface Props {
+  status: { openclawRunning: boolean; agentCount: number; integrationCount: number; agents?: Agent[] } | null;
+  onLoad: () => void;
+  onNext: () => void;
+  onFreshStart?: () => void;
+}
+
+export default function Welcome({ status, onLoad, onNext, onFreshStart }: Props) {
+  const [resetting, setResetting] = useState(false);
+
   useEffect(() => { onLoad(); }, []);
 
-  const nodeOk = typeof process === 'undefined' || true; // Always true in browser
+  const nodeOk = typeof process === 'undefined' || true;
+  const hasExistingAgents = (status?.agentCount ?? 0) > 0;
+
+  const handleFreshStart = async () => {
+    if (!onFreshStart) return;
+    setResetting(true);
+    try {
+      await onFreshStart();
+    } finally {
+      setResetting(false);
+    }
+  };
 
   return (
     <div className="text-center">
@@ -46,12 +67,52 @@ export default function Welcome({ status, onLoad, onNext }: Props) {
         </div>
       </div>
 
-      <button
-        onClick={onNext}
-        className="px-8 py-3 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium hover:from-indigo-400 hover:to-purple-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        Get Started
-      </button>
+      {hasExistingAgents && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mb-6 max-w-md mx-auto text-left">
+          <div className="flex items-start gap-3">
+            <AlertCircle size={18} className="text-amber-400 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-amber-200 text-sm font-medium">
+                You already have {status!.agentCount} agent{status!.agentCount !== 1 ? 's' : ''} configured
+              </p>
+              {status?.agents && status.agents.length > 0 && (
+                <ul className="text-xs text-amber-300/70 mt-1">
+                  {status.agents.filter(a => a.role !== 'router').map(a => (
+                    <li key={a.id}>• {a.name} ({a.role})</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex gap-3 justify-center">
+        {hasExistingAgents ? (
+          <>
+            <button
+              onClick={onNext}
+              className="px-8 py-3 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium hover:from-indigo-400 hover:to-purple-500 transition-all"
+            >
+              Modify Setup
+            </button>
+            <button
+              onClick={handleFreshStart}
+              disabled={resetting}
+              className="px-8 py-3 rounded-lg border border-red-500/30 text-red-400 font-medium hover:bg-red-500/10 transition-all disabled:opacity-40"
+            >
+              {resetting ? 'Resetting...' : 'Start Fresh'}
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={onNext}
+            className="px-8 py-3 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium hover:from-indigo-400 hover:to-purple-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Get Started
+          </button>
+        )}
+      </div>
     </div>
   );
 }

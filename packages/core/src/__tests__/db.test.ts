@@ -99,6 +99,16 @@ describe('Database CRUD', () => {
       expect(agent!.status).toBe('offline');
     });
 
+    it('should upsert agent (insert twice with same id should not crash)', () => {
+      db.insert(schema.agents).values({ id: 'a1', role: 'eng', name: 'A1', status: 'active', createdAt: new Date() }).run();
+      // Second insert with onConflictDoUpdate
+      db.insert(schema.agents).values({ id: 'a1', role: 'eng', name: 'A1 Updated', status: 'active', createdAt: new Date() })
+        .onConflictDoUpdate({ target: schema.agents.id, set: { name: 'A1 Updated' } })
+        .run();
+      const agent = db.select().from(schema.agents).where(eq(schema.agents.id, 'a1')).get();
+      expect(agent!.name).toBe('A1 Updated');
+    });
+
     it('should delete an agent', () => {
       db.insert(schema.agents).values({ id: 'a1', role: 'eng', name: 'A1', status: 'active', createdAt: new Date() }).run();
       db.delete(schema.agents).where(eq(schema.agents.id, 'a1')).run();

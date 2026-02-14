@@ -18,4 +18,5 @@ export const api = {
   setup: (body: { roles: string[]; integrations: Record<string, Record<string, Record<string, string>>> }) =>
     request<{ success: boolean; agents: any[] }>('/api/setup', { method: 'POST', body: JSON.stringify(body) }),
   getAgents: () => request<{ agents: any[] }>('/api/agents'),
+  reset: () => request<{ success: boolean; removed: number }>('/api/setup/reset', { method: 'POST' }),
 };

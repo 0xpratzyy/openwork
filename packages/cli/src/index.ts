@@ -4,10 +4,56 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { execSync, spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
+import { writeFileSync, readFileSync, unlinkSync, existsSync } from 'node:fs';
+import { createInterface } from 'node:readline';
 
 const require = createRequire(import.meta.url);
 
 const program = new Command();
+
+const PID_DIR = join(homedir(), '.openwork');
+const PID_FILE = join(PID_DIR, 'server.pid');
+
+function writePid(pid: number) {
+  const { mkdirSync } = await_import_fs();
+  mkdirSync(PID_DIR, { recursive: true });
+  writeFileSync(PID_FILE, String(pid), 'utf-8');
+}
+
+function readPid(): number | null {
+  try {
+    const pid = parseInt(readFileSync(PID_FILE, 'utf-8').trim(), 10);
+    return isNaN(pid) ? null : pid;
+  } catch { return null; }
+}
+
+function isProcessAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch { return false; }
+}
+
+function clearPid() {
+  try { unlinkSync(PID_FILE); } catch { /* ignore */ }
+}
+
+// Trick to get mkdirSync without top-level await issue
+function await_import_fs() {
+  return { mkdirSync: require('fs').mkdirSync };
+}
+
+function askConfirmation(question: string): Promise<boolean> {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
+    });
+  });
+}
 
 program
   .name('openwork')
@@ -19,35 +65,40 @@ program
   .command('setup')
   .description('Launch the setup wizard to configure your AI team')
   .action(async () => {
-    const spinner = ora('Starting OpenWork server...').start();
-    try {
-      // Start Express server in background
-      const server = spawn('node', [require.resolve('@openwork/server/dist/index.js')], {
-        stdio: 'ignore',
-        detached: true,
-      });
-      server.unref();
-
-      // Wait a moment for server to start
-      await new Promise((r) => setTimeout(r, 1500));
-      spinner.succeed('Server started on http://localhost:18800');
-
-      console.log(chalk.cyan('\n🚀 Opening setup wizard in your browser...\n'));
-
-      // Open browser
-      const url = 'http://localhost:18800';
+    // Check if already running
+    const existingPid = readPid();
+    if (existingPid && isProcessAlive(existingPid)) {
+      console.log(chalk.yellow(`Server already running (PID ${existingPid}). Opening wizard...`));
+    } else {
+      const spinner = ora('Starting OpenWork server...').start();
       try {
-        const platform = process.platform;
-        if (platform === 'darwin') execSync(`open ${url}`);
-        else if (platform === 'win32') execSync(`start ${url}`);
-        else execSync(`xdg-open ${url}`);
-      } catch {
-        console.log(chalk.yellow(`Could not open browser. Visit: ${url}`));
+        const server = spawn('node', [require.resolve('@openwork/server/dist/index.js')], {
+          stdio: 'ignore',
+          detached: true,
+        });
+        server.unref();
+
+        if (server.pid) writePid(server.pid);
+
+        await new Promise((r) => setTimeout(r, 1500));
+        spinner.succeed(`Server started on http://localhost:18800 (PID ${server.pid})`);
+      } catch (err) {
+        spinner.fail('Failed to start server');
+        console.error(chalk.red(err instanceof Error ? err.message : String(err)));
+        process.exit(1);
       }
-    } catch (err) {
-      spinner.fail('Failed to start server');
-      console.error(chalk.red(err instanceof Error ? err.message : String(err)));
-      process.exit(1);
+    }
+
+    console.log(chalk.cyan('\n🚀 Opening setup wizard in your browser...\n'));
+
+    const url = 'http://localhost:18800';
+    try {
+      const platform = process.platform;
+      if (platform === 'darwin') execSync(`open ${url}`);
+      else if (platform === 'win32') execSync(`start ${url}`);
+      else execSync(`xdg-open ${url}`);
+    } catch {
+      console.log(chalk.yellow(`Could not open browser. Visit: ${url}`));
     }
   });
 
@@ -56,14 +107,47 @@ program
   .command('start')
   .description('Start the OpenWork server (dashboard mode)')
   .action(async () => {
+    const existingPid = readPid();
+    if (existingPid && isProcessAlive(existingPid)) {
+      console.log(chalk.yellow(`Server already running (PID ${existingPid}). Use 'openwork stop' first.`));
+      return;
+    }
+
     console.log(chalk.cyan('🚀 Starting OpenWork server...\n'));
     try {
-      // Import and run server inline
       const serverPath = require.resolve('@openwork/server/dist/index.js');
+      writePid(process.pid);
       await import(serverPath);
     } catch (err) {
+      clearPid();
       console.error(chalk.red('Failed to start server:'), err instanceof Error ? err.message : String(err));
       process.exit(1);
+    }
+  });
+
+// ── stop ──
+program
+  .command('stop')
+  .description('Stop the OpenWork server')
+  .action(() => {
+    const pid = readPid();
+    if (!pid) {
+      console.log(chalk.yellow('No server PID file found. Server may not be running.'));
+      return;
+    }
+
+    if (!isProcessAlive(pid)) {
+      console.log(chalk.yellow(`Server process ${pid} is not running. Cleaning up PID file.`));
+      clearPid();
+      return;
+    }
+
+    try {
+      process.kill(pid, 'SIGTERM');
+      clearPid();
+      console.log(chalk.green(`Server stopped (PID ${pid}).`));
+    } catch (err) {
+      console.error(chalk.red(`Failed to stop server (PID ${pid}):`), err instanceof Error ? err.message : String(err));
     }
   });
 
@@ -73,6 +157,15 @@ program
   .description('Show status of OpenClaw, agents, and integrations')
   .action(async () => {
     console.log(chalk.bold('\n📊 OpenWork Status\n'));
+
+    // Check server
+    const pid = readPid();
+    if (pid && isProcessAlive(pid)) {
+      console.log(chalk.green(`  ✓ Server: running (PID ${pid})`));
+    } else {
+      console.log(chalk.yellow('  ⚠ Server: not running'));
+      if (pid) clearPid();
+    }
 
     // Check OpenClaw
     try {
@@ -100,13 +193,54 @@ program
         console.log(`    ${statusIcon} ${agent.name} (${agent.role}) — ${agent.status}`);
       }
       if (agents.length === 0) {
-        console.log(chalk.gray('    No agents configured. Run: openwork agents add <role>'));
+        console.log(chalk.gray('    No agents configured. Run: openwork setup'));
       }
-    } catch (err) {
+    } catch {
       console.log(chalk.gray('    Could not read agent database'));
     }
 
     console.log();
+  });
+
+// ── reset ──
+program
+  .command('reset')
+  .description('Remove all agents and reset OpenWork')
+  .action(async () => {
+    try {
+      const { listAgents, deleteAllAgents, deleteAllIntegrations, removeAgent } = await import('@openwork/core');
+      const agents = listAgents();
+
+      if (agents.length === 0) {
+        console.log(chalk.yellow('No agents configured. Nothing to reset.'));
+        return;
+      }
+
+      const confirmed = await askConfirmation(
+        chalk.yellow(`This will remove all ${agents.length} agent(s) and their data. Are you sure? (y/N) `)
+      );
+
+      if (!confirmed) {
+        console.log(chalk.gray('Reset cancelled.'));
+        return;
+      }
+
+      const spinner = ora('Resetting OpenWork...').start();
+
+      for (const agent of agents) {
+        try {
+          await removeAgent(agent.id);
+        } catch { /* best effort */ }
+      }
+
+      deleteAllIntegrations();
+      deleteAllAgents();
+
+      spinner.succeed(`Removed ${agents.length} agent(s). OpenWork has been reset.`);
+    } catch (err) {
+      console.error(chalk.red('Reset failed:'), err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
   });
 
 // ── agents ──
@@ -159,7 +293,6 @@ agentsCmd
 
       const result = await generateAgent(template, { name: opts.name });
 
-      // Record in DB
       dbCreateAgent({
         id: result.id,
         role: result.role,

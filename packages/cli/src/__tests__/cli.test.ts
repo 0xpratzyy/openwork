@@ -21,9 +21,14 @@ describe('CLI Structure', () => {
     agents.command('add <role>').description('Add agent');
     agents.command('remove <id>').description('Remove agent');
 
+    program.command('stop').description('Stop server');
+    program.command('reset').description('Reset all');
+
     const cmds = program.commands.map(c => c.name());
     expect(cmds).toContain('setup');
     expect(cmds).toContain('start');
+    expect(cmds).toContain('stop');
+    expect(cmds).toContain('reset');
     expect(cmds).toContain('status');
     expect(cmds).toContain('agents');
 
@@ -54,6 +59,8 @@ describe('CLI Dependencies', () => {
     expect(typeof core.removeAgent).toBe('function');
     expect(typeof core.removeAgentBinding).toBe('function');
     expect(typeof core.generateAgent).toBe('function');
+    expect(typeof core.deleteAllAgents).toBe('function');
+    expect(typeof core.deleteAllIntegrations).toBe('function');
   });
 
   it('@openwork/agents exports expected functions', async () => {

@@ -107,6 +107,10 @@ export default function App() {
               status={state.status}
               onLoad={loadStatus}
               onNext={() => { loadRoles(); setStep(1); }}
+              onFreshStart={async () => {
+                await api.reset();
+                await loadStatus();
+              }}
             />
           )}
           {state.step === 1 && (

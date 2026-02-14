@@ -96,7 +96,7 @@ function genId(): string {
 
 // ── Agent CRUD ──
 
-/** Create a new agent record */
+/** Create or update an agent record (upsert) */
 export function dbCreateAgent(data: { id?: string; role: string; name: string; workspacePath?: string }) {
   const db = getDb();
   const row = {
@@ -107,7 +107,16 @@ export function dbCreateAgent(data: { id?: string; role: string; name: string; w
     workspacePath: data.workspacePath ?? null,
     createdAt: new Date(),
   };
-  db.insert(schema.agents).values(row).run();
+  try {
+    db.insert(schema.agents).values(row)
+      .onConflictDoUpdate({
+        target: schema.agents.id,
+        set: { role: row.role, name: row.name, status: row.status, workspacePath: row.workspacePath },
+      })
+      .run();
+  } catch (err) {
+    throw new Error(`Failed to create agent "${row.id}": ${err instanceof Error ? err.message : String(err)}`);
+  }
   return row;
 }
 
@@ -137,12 +146,45 @@ export function deleteAgent(id: string) {
 
 // ── Integration CRUD ──
 
-/** Create a new integration record */
+/** Create a new integration record (handles duplicates gracefully) */
 export function createIntegration(data: { agentId: string; type: string; configEncrypted?: string }) {
   const db = getDb();
   const row = { id: genId(), ...data, configEncrypted: data.configEncrypted ?? null, status: 'disconnected' };
-  db.insert(schema.integrations).values(row).run();
+  try {
+    db.insert(schema.integrations).values(row)
+      .onConflictDoUpdate({
+        target: schema.integrations.id,
+        set: { agentId: row.agentId, type: row.type, configEncrypted: row.configEncrypted, status: row.status },
+      })
+      .run();
+  } catch (err) {
+    throw new Error(`Failed to create integration: ${err instanceof Error ? err.message : String(err)}`);
+  }
   return row;
+}
+
+/** Delete all integrations for a given agent */
+export function deleteIntegrationsByAgent(agentId: string) {
+  const db = getDb();
+  db.delete(schema.integrations).where(eq(schema.integrations.agentId, agentId)).run();
+}
+
+/** Delete all agents */
+export function deleteAllAgents() {
+  const db = getDb();
+  db.delete(schema.agents).run();
+}
+
+/** Delete all integrations */
+export function deleteAllIntegrations() {
+  const db = getDb();
+  db.delete(schema.integrations).run();
+}
+
+/** Get agents by role */
+export function getAgentsByRole(role: string) {
+  const db = getDb();
+  return db.select().from(schema.agents).where(eq(schema.agents.role, role)).all();
 }
 
 /** Get integration by ID */
