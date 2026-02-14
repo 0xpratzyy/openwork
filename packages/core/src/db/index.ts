@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS agents (
 
 CREATE TABLE IF NOT EXISTS integrations (
   id TEXT PRIMARY KEY,
-  agent_id TEXT NOT NULL REFERENCES agents(id),
+  agent_id TEXT,
   type TEXT NOT NULL,
   config_encrypted TEXT,
   status TEXT NOT NULL DEFAULT 'disconnected'
@@ -76,6 +76,7 @@ export function getDb() {
   mkdirSync(DB_DIR, { recursive: true });
   _sqlite = new Database(DB_PATH);
   _sqlite.pragma('journal_mode = WAL');
+  _sqlite.pragma('foreign_keys = OFF');
   _sqlite.exec(MIGRATIONS);
   _db = drizzle(_sqlite, { schema });
   return _db;
