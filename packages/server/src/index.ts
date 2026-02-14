@@ -36,7 +36,7 @@ const wizardDist = join(__dirname, '..', '..', 'wizard', 'dist');
 if (existsSync(wizardDist)) {
   app.use('/', express.static(wizardDist));
   // SPA fallback
-  app.get('*', (_req, res) => {
+  app.get('/{*path}', (_req, res) => {
     res.sendFile(join(wizardDist, 'index.html'));
   });
 }

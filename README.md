@@ -82,11 +82,17 @@ cd openwork
 npm install
 
 # Build all packages
-npm run build
+npx turbo build
+
+# Link the CLI locally
+npm link --workspace=packages/cli
 
 # Launch the setup wizard
-npx openwork setup
+openwork setup
 ```
+
+> **Note:** The CLI isn't published to npm yet. If `npm link` doesn't work, run commands directly:
+> `node packages/cli/dist/index.js setup`
 
 The setup wizard opens at `http://localhost:18800` and walks you through:
 
@@ -98,7 +104,7 @@ The setup wizard opens at `http://localhost:18800` and walks you through:
 Then start your team:
 
 ```bash
-npx openwork start
+openwork start
 ```
 
 Invite the bot to your Slack channel and mention `@openwork` to get started.
