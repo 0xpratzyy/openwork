@@ -69,16 +69,18 @@ export default function Integrations() {
     setConfigValues({});
   };
 
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const handleSave = async () => {
     if (!selected) return;
     setSaving(true);
+    setSaveError(null);
     try {
-      // Save via configure endpoint
       await apiPost(`/integrations/${selected.id}/configure`, { config: configValues });
       refetchConnected();
       setSelected(null);
-    } catch {
-      // ignore errors for now
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -271,6 +273,12 @@ export default function Integrations() {
 
               {(selected.configSchema || []).length === 0 && (
                 <p className="text-sm text-gray-500">No configuration required for this integration.</p>
+              )}
+
+              {saveError && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <p className="text-red-400 text-sm">{saveError}</p>
+                </div>
               )}
 
               <div className="flex gap-2 pt-2">

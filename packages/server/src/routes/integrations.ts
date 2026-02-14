@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { listIntegrations, getIntegration, updateIntegration } from '@openwork/core';
+import { listIntegrations, createIntegration, updateIntegration } from '@openwork/core';
 
 export const integrationsRouter = Router();
 
@@ -22,18 +22,26 @@ integrationsRouter.get('/', (_req, res) => {
 integrationsRouter.post('/:id/configure', (req, res) => {
   try {
     const { id } = req.params;
-    const { config } = req.body as { agentId?: string; config: Record<string, string> };
+    const { config, agentId } = req.body as { agentId?: string; config: Record<string, string> };
 
-    const existing = getIntegration(id);
-    if (!existing) {
-      res.status(404).json({ error: 'Integration not found' });
-      return;
+    // Try to find existing integration by type
+    const integrations = listIntegrations();
+    const existing = integrations.find((i: any) => i.type === id || i.id === id);
+
+    if (existing) {
+      // Update existing
+      updateIntegration(existing.id, {
+        configEncrypted: JSON.stringify(config),
+        status: 'configured',
+      });
+    } else {
+      // Create new integration
+      createIntegration({
+        agentId: agentId || 'unassigned',
+        type: id,
+        configEncrypted: JSON.stringify(config),
+      });
     }
-
-    updateIntegration(id, {
-      configEncrypted: JSON.stringify(config),
-      status: 'configured',
-    });
 
     res.json({ success: true });
   } catch (err) {
