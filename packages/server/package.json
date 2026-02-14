@@ -11,7 +11,8 @@
   "dependencies": {
     "express": "^5.0.1",
     "cors": "^2.8.5",
-    "@openwork/core": "*"
+    "@openwork/core": "*",
+    "@openwork/agents": "*"
   },
   "devDependencies": {
     "typescript": "^5.7.3",

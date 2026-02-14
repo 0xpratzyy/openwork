@@ -1,7 +1,29 @@
 import { Router } from 'express';
+import { listAgents, deleteAgent, removeAgent } from '@openwork/core';
 
 export const agentsRouter = Router();
 
 agentsRouter.get('/', (_req, res) => {
-  res.json({ message: 'agents endpoint — not implemented yet' });
+  try {
+    const agents = listAgents();
+    res.json({ agents });
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+agentsRouter.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Remove workspace and OpenClaw config
+    await removeAgent(id);
+
+    // Remove from DB
+    deleteAgent(id);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
 });
