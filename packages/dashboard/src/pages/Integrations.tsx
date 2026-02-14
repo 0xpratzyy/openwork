@@ -70,15 +70,21 @@ export default function Integrations() {
   };
 
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
 
   const handleSave = async () => {
     if (!selected) return;
     setSaving(true);
     setSaveError(null);
+    setSaveSuccess(null);
     try {
-      await apiPost(`/integrations/${selected.id}/configure`, { config: configValues });
+      const result = await apiPost<{ success: boolean; message?: string; type?: string }>(`/integrations/${selected.id}/configure`, { config: configValues });
       refetchConnected();
-      setSelected(null);
+      if (result.message) {
+        setSaveSuccess(result.message);
+      } else {
+        setSelected(null);
+      }
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -278,6 +284,23 @@ export default function Integrations() {
               {saveError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                   <p className="text-red-400 text-sm">{saveError}</p>
+                </div>
+              )}
+
+              {saveSuccess && (
+                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg space-y-2">
+                  <p className="text-green-400 text-sm">✅ {saveSuccess}</p>
+                  {saveSuccess.includes('Restart') && (
+                    <button
+                      onClick={() => {
+                        setSelected(null);
+                        setSaveSuccess(null);
+                      }}
+                      className="text-xs text-indigo-400 hover:text-indigo-300"
+                    >
+                      Done
+                    </button>
+                  )}
                 </div>
               )}
 

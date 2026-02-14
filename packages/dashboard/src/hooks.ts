@@ -21,13 +21,17 @@ export function useFetch<T>(path: string, deps: unknown[] = []) {
   return { data, loading, error, refetch };
 }
 
-export async function apiPost(path: string, body: unknown) {
+export async function apiPost<T = any>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${API}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  return res.json();
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as any).error || `Request failed: ${res.status}`);
+  }
+  return res.json() as Promise<T>;
 }
 
 export async function apiDelete(path: string) {

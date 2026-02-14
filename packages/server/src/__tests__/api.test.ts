@@ -32,6 +32,8 @@ vi.mock('@openwork/core', () => ({
   generateRouterAgent: vi.fn(async () => ({ id: 'router', name: 'Router Agent', role: 'router', workspacePath: '/tmp', specialistsIncluded: ['eng-1'] })),
   dbCreateAgent: vi.fn((data: any) => data),
   patchConfig: vi.fn(),
+  getConfig: vi.fn(() => ({ agents: { list: [] }, bindings: [], channels: {} })),
+  setChannel: vi.fn(),
 }));
 
 vi.mock('@openwork/agents', () => ({
