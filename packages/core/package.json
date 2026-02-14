@@ -10,6 +10,7 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
+    "@openwork/agents": "*",
     "better-sqlite3": "^11.8.1",
     "drizzle-orm": "^0.39.3"
   },

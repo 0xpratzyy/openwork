@@ -5,6 +5,7 @@ export const agents = sqliteTable('agents', {
   role: text('role').notNull(),
   name: text('name').notNull(),
   status: text('status').notNull().default('inactive'),
+  workspacePath: text('workspace_path'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
@@ -22,6 +23,7 @@ export const approvals = sqliteTable('approvals', {
   action: text('action').notNull(),
   riskLevel: text('risk_level').notNull(),
   status: text('status').notNull().default('pending'),
+  metadata: text('metadata'),
   requestedAt: integer('requested_at', { mode: 'timestamp' }).notNull(),
   resolvedAt: integer('resolved_at', { mode: 'timestamp' }),
   resolver: text('resolver'),

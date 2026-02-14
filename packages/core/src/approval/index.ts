@@ -1,7 +1,7 @@
 /**
  * Approval Engine
  *
- * Manages approval workflows for agent actions.
+ * High-level approval workflow logic.
  * Risk tiers: low (auto-approve), medium (single approver), high (admin required).
  */
 
@@ -17,12 +17,20 @@ export interface ApprovalRequest {
   metadata?: Record<string, unknown>;
 }
 
-export async function createApproval(_request: Omit<ApprovalRequest, 'status'>): Promise<ApprovalRequest> {
-  // TODO: implement approval creation
-  throw new Error('Not implemented yet');
+/**
+ * Determine if an action needs manual approval based on risk level.
+ */
+export function needsApproval(riskLevel: RiskLevel): boolean {
+  return riskLevel !== 'low';
 }
 
-export async function resolveApproval(_id: string, _status: 'approved' | 'rejected', _resolver: string): Promise<void> {
-  // TODO: implement approval resolution
-  throw new Error('Not implemented yet');
+/**
+ * Get the required approver type for a risk level.
+ */
+export function getApproverType(riskLevel: RiskLevel): 'none' | 'member' | 'admin' {
+  switch (riskLevel) {
+    case 'low': return 'none';
+    case 'medium': return 'member';
+    case 'high': return 'admin';
+  }
 }
