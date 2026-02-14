@@ -1,0 +1,25 @@
+{
+  "name": "openwork",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Open-source multi-agent AI coworker for teams, built on OpenClaw",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.3",
+    "prettier": "^3.4.2",
+    "eslint": "^9.19.0"
+  },
+  "packageManager": "npm@10.9.2",
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,6 +1,9 @@
 node_modules/
 dist/
-.env
-*.db
-.DS_Store
 .turbo/
+*.tsbuildinfo
+.env
+.env.local
+*.db
+*.sqlite
+.DS_Store
