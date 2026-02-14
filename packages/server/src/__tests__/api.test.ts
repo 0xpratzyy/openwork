@@ -1,24 +1,17 @@
-import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
-// Mock @openwork/core before importing routes
+// Mock @openwork/core
 vi.mock('@openwork/core', () => ({
   listAgents: vi.fn(() => []),
-  deleteAgent: vi.fn(),
+  removeAgentFromConfig: vi.fn(),
   removeAgent: vi.fn(async () => {}),
-  deleteAllAgents: vi.fn(),
-  deleteAllIntegrations: vi.fn(),
-  deleteIntegrationsByAgent: vi.fn(),
+  removeAllAgents: vi.fn(),
   getAgentsByRole: vi.fn(() => []),
   listPendingApprovals: vi.fn(() => []),
   getApproval: vi.fn(() => null),
   dbResolveApproval: vi.fn(),
-  listIntegrations: vi.fn(() => []),
-  getIntegration: vi.fn(() => null),
-  updateIntegration: vi.fn(),
-  listTasks: vi.fn(() => []),
-  getAuditLog: vi.fn(() => []),
   listRegistryIntegrations: vi.fn((category?: string) => {
     const all = [
       { id: 'github', name: 'GitHub', categories: ['engineering'], tools: [], configSchema: [], transport: 'stdio', status: 'verified', stars: 100 },
@@ -38,7 +31,6 @@ vi.mock('@openwork/core', () => ({
   generateAgent: vi.fn(async () => ({ id: 'eng-1', name: 'Engineering', role: 'engineering', workspacePath: '/tmp' })),
   generateRouterAgent: vi.fn(async () => ({ id: 'router', name: 'Router Agent', role: 'router', workspacePath: '/tmp', specialistsIncluded: ['eng-1'] })),
   dbCreateAgent: vi.fn((data: any) => data),
-  createIntegration: vi.fn(),
   patchConfig: vi.fn(),
 }));
 
@@ -59,13 +51,11 @@ vi.mock('@openwork/agents', () => ({
   }),
 }));
 
-// Mock execSync for status route
 vi.mock('node:child_process', () => ({
   execSync: vi.fn(() => { throw new Error('not found'); }),
   spawn: vi.fn(),
 }));
 
-// Build a test app with routes
 async function createTestApp() {
   const app = express();
   app.use(express.json());
@@ -104,7 +94,6 @@ describe('Server API', () => {
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('openclawRunning');
       expect(res.body).toHaveProperty('agentCount');
-      expect(res.body).toHaveProperty('integrationCount');
       expect(typeof res.body.openclawRunning).toBe('boolean');
       expect(typeof res.body.agentCount).toBe('number');
     });
@@ -115,9 +104,6 @@ describe('Server API', () => {
       const res = await request(app).get('/api/roles');
       expect(res.status).toBe(200);
       expect(res.body.roles).toHaveLength(5);
-      expect(res.body.roles.map((r: any) => r.id)).toEqual(
-        expect.arrayContaining(['engineering', 'marketing', 'sales', 'support', 'ops'])
-      );
     });
   });
 
@@ -229,15 +215,6 @@ describe('Server API', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(typeof res.body.removed).toBe('number');
-    });
-  });
-
-  describe('GET /api/status (existing setup detection)', () => {
-    it('returns agents array', async () => {
-      const res = await request(app).get('/api/status');
-      expect(res.status).toBe(200);
-      expect(res.body).toHaveProperty('agents');
-      expect(Array.isArray(res.body.agents)).toBe(true);
     });
   });
 

@@ -162,7 +162,7 @@ program
         console.log(chalk.gray('    No agents configured. Run: openwork start'));
       }
     } catch {
-      console.log(chalk.gray('    Could not read agent database'));
+      console.log(chalk.gray('    Could not read agent config'));
     }
 
     console.log();
@@ -174,7 +174,7 @@ program
   .description('Remove all agents and reset OpenWork')
   .action(async () => {
     try {
-      const { listAgents, deleteAllAgents, deleteAllIntegrations, removeAgent } = await import('@openwork/core');
+      const { listAgents, removeAllAgents, removeAgent } = await import('@openwork/core');
       const agents = listAgents();
 
       if (agents.length === 0) {
@@ -199,8 +199,7 @@ program
         } catch { /* best effort */ }
       }
 
-      deleteAllIntegrations();
-      deleteAllAgents();
+      removeAllAgents();
 
       spinner.succeed(`Removed ${agents.length} agent(s). OpenWork has been reset.`);
     } catch (err) {
@@ -231,9 +230,9 @@ agentsCmd
       console.log(chalk.bold(`\n📋 Agents (${agents.length}):\n`));
       for (const agent of agents) {
         const statusIcon = agent.status === 'active' ? chalk.green('●') : chalk.gray('○');
-        const created = agent.createdAt instanceof Date
-          ? agent.createdAt.toLocaleDateString()
-          : new Date(agent.createdAt as number).toLocaleDateString();
+        const created = agent.createdAt
+          ? new Date(agent.createdAt).toLocaleDateString()
+          : 'unknown';
         console.log(`  ${statusIcon} ${chalk.bold(agent.name)} — ${agent.role} (${agent.status}) — created ${created}`);
       }
       console.log();
@@ -282,11 +281,10 @@ agentsCmd
   .action(async (id: string) => {
     const spinner = ora(`Removing agent ${id}...`).start();
     try {
-      const { removeAgent, deleteAgent, removeAgentBinding } = await import('@openwork/core');
+      const { removeAgent, removeAgentFromConfig, removeAgentBindings } = await import('@openwork/core');
 
       await removeAgent(id);
-      deleteAgent(id);
-      removeAgentBinding(id);
+      removeAgentFromConfig(id);
 
       spinner.succeed(`Removed agent ${chalk.bold(id)}`);
     } catch (err) {

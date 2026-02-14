@@ -1,17 +1,9 @@
 /**
  * Approval Engine
  *
- * Full approval workflow: create requests, resolve them, check risk levels.
+ * In-memory approval workflow. No DB dependency.
  * Risk tiers: low (auto-approve), medium (single approver), high (admin required).
  */
-
-import {
-  dbCreateApproval,
-  getApproval as dbGetApproval,
-  listPendingApprovals as dbListPending,
-  dbResolveApproval,
-  logAction,
-} from '../db/index.js';
 
 export type RiskLevel = 'low' | 'medium' | 'high';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
@@ -36,59 +28,61 @@ export interface ApprovalResolution {
   resolvedAt: Date;
 }
 
-/** Default action-to-risk mappings used when a template doesn't specify */
+function genId(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 const DEFAULT_ACTION_RISK: Record<string, RiskLevel> = {
-  // Low — read-only / informational
-  read: 'low',
-  search: 'low',
-  list: 'low',
-  get: 'low',
-  summarize: 'low',
-  create_report: 'low',
-  query: 'low',
-  // Medium — creates/modifies records
-  create: 'medium',
-  update: 'medium',
-  create_issue: 'medium',
-  draft_email: 'medium',
-  update_record: 'medium',
-  schedule_post: 'medium',
-  // High — destructive or external-facing
-  deploy: 'high',
-  send_email: 'high',
-  delete: 'high',
-  modify_budget: 'high',
+  read: 'low', search: 'low', list: 'low', get: 'low', summarize: 'low',
+  create_report: 'low', query: 'low',
+  create: 'medium', update: 'medium', create_issue: 'medium', draft_email: 'medium',
+  update_record: 'medium', schedule_post: 'medium',
+  deploy: 'high', send_email: 'high', delete: 'high', modify_budget: 'high',
   merge_pull_request: 'high',
 };
 
-/**
- * Determine if an action needs manual approval based on risk level.
- */
 export function needsApproval(riskLevel: RiskLevel): boolean {
   return riskLevel !== 'low';
 }
 
-/**
- * Get the required approver type for a risk level.
- */
 export function getApproverType(riskLevel: RiskLevel): 'none' | 'member' | 'admin' {
   switch (riskLevel) {
-    case 'low':
-      return 'none';
-    case 'medium':
-      return 'member';
-    case 'high':
-      return 'admin';
+    case 'low': return 'none';
+    case 'medium': return 'member';
+    case 'high': return 'admin';
   }
 }
 
-/**
- * ApprovalEngine — encapsulates all approval workflow logic.
- */
+// In-memory store for approvals
+const _approvals = new Map<string, ApprovalRequest>();
+
+/** Get an approval by ID */
+export function getApproval(id: string): ApprovalRequest | undefined {
+  return _approvals.get(id);
+}
+
+/** List all pending approvals */
+export function listPendingApprovals(agentId?: string): ApprovalRequest[] {
+  const all = Array.from(_approvals.values()).filter((a) => a.status === 'pending');
+  return agentId ? all.filter((a) => a.agentId === agentId) : all;
+}
+
+/** Resolve an approval */
+export function dbResolveApproval(id: string, status: 'approved' | 'rejected', resolver: string): void {
+  const approval = _approvals.get(id);
+  if (approval) {
+    approval.status = status;
+    approval.resolver = resolver;
+    approval.resolvedAt = new Date();
+  }
+}
+
+/** Clear all approvals (for testing) */
+export function clearApprovals(): void {
+  _approvals.clear();
+}
+
 export class ApprovalEngine {
-  /**
-   * Create a new approval request. If low risk, auto-approves immediately.
-   */
   createApprovalRequest(
     agentId: string,
     action: string,
@@ -96,53 +90,36 @@ export class ApprovalEngine {
     riskLevel: RiskLevel,
     metadata?: Record<string, unknown>
   ): ApprovalRequest {
-    const autoApproved = this.isAutoApproved(riskLevel);
-    const row = dbCreateApproval({
+    const request: ApprovalRequest = {
+      id: genId(),
       agentId,
       action,
-      riskLevel,
-      metadata: metadata ? JSON.stringify({ description, ...metadata }) : JSON.stringify({ description }),
-    });
-
-    const request: ApprovalRequest = {
-      id: row.id,
-      agentId: row.agentId,
-      action: row.action,
       description,
-      riskLevel: row.riskLevel as RiskLevel,
+      riskLevel,
       status: 'pending',
       metadata: metadata ?? {},
-      requestedAt: row.requestedAt as Date,
+      requestedAt: new Date(),
       resolvedAt: null,
       resolver: null,
     };
 
-    // Auto-approve low risk
-    if (autoApproved) {
-      const resolution = this.resolveApproval(row.id, 'approve', 'system:auto');
-      request.status = resolution.status;
-      request.resolvedAt = resolution.resolvedAt;
-      request.resolver = resolution.resolvedBy;
-    }
+    _approvals.set(request.id, request);
 
-    logAction({
-      agentId,
-      action: `approval_created:${action}`,
-      details: JSON.stringify({ approvalId: row.id, riskLevel, autoApproved }),
-    });
+    if (this.isAutoApproved(riskLevel)) {
+      request.status = 'approved';
+      request.resolver = 'system:auto';
+      request.resolvedAt = new Date();
+    }
 
     return request;
   }
 
-  /**
-   * Resolve (approve or reject) a pending approval.
-   */
   resolveApproval(
     approvalId: string,
     action: 'approve' | 'reject',
     resolvedBy: string
   ): ApprovalResolution {
-    const existing = dbGetApproval(approvalId);
+    const existing = _approvals.get(approvalId);
     if (!existing) {
       throw new Error(`Approval ${approvalId} not found`);
     }
@@ -151,95 +128,31 @@ export class ApprovalEngine {
     }
 
     const status: ApprovalStatus = action === 'approve' ? 'approved' : 'rejected';
-    dbResolveApproval(approvalId, status, resolvedBy);
+    existing.status = status;
+    existing.resolver = resolvedBy;
+    existing.resolvedAt = new Date();
 
-    const resolvedAt = new Date();
-
-    logAction({
-      agentId: existing.agentId,
-      action: `approval_${status}`,
-      details: JSON.stringify({ approvalId, resolvedBy }),
-    });
-
-    return { id: approvalId, status, resolvedBy, resolvedAt };
+    return { id: approvalId, status, resolvedBy, resolvedAt: existing.resolvedAt };
   }
 
-  /**
-   * List pending approvals, optionally filtered by agent.
-   */
   getPendingApprovals(agentId?: string): ApprovalRequest[] {
-    const rows = dbListPending();
-    const filtered = agentId ? rows.filter((r: any) => r.agentId === agentId) : rows;
-    return filtered.map((r: any) => this._rowToRequest(r));
+    return listPendingApprovals(agentId);
   }
 
-  /**
-   * Get a single approval by ID with full details.
-   */
   getApprovalById(id: string): ApprovalRequest | undefined {
-    const row = dbGetApproval(id);
-    if (!row) return undefined;
-    return this._rowToRequest(row);
+    return _approvals.get(id);
   }
 
-  /**
-   * Determine the risk level for an action based on a role template's approval rules.
-   * Falls back to default action-risk mappings, then to 'medium' for unknown actions.
-   */
-  checkRiskLevel(
-    approvalRules: Record<string, RiskLevel>,
-    actionType: string
-  ): RiskLevel {
-    // Direct match in template rules
-    if (approvalRules[actionType]) {
-      return approvalRules[actionType];
-    }
-    // Check default mappings
-    if (DEFAULT_ACTION_RISK[actionType]) {
-      return DEFAULT_ACTION_RISK[actionType];
-    }
-    // Check prefix match (e.g. "read_issues" matches "read")
+  checkRiskLevel(approvalRules: Record<string, RiskLevel>, actionType: string): RiskLevel {
+    if (approvalRules[actionType]) return approvalRules[actionType];
+    if (DEFAULT_ACTION_RISK[actionType]) return DEFAULT_ACTION_RISK[actionType];
     for (const [prefix, level] of Object.entries(DEFAULT_ACTION_RISK)) {
-      if (actionType.startsWith(prefix)) {
-        return level;
-      }
+      if (actionType.startsWith(prefix)) return level;
     }
-    // Unknown = medium (safe default)
     return 'medium';
   }
 
-  /**
-   * Returns true if the given risk level should be auto-approved (no human needed).
-   */
   isAutoApproved(riskLevel: RiskLevel): boolean {
     return riskLevel === 'low';
-  }
-
-  /** Convert a DB row to an ApprovalRequest */
-  private _rowToRequest(row: any): ApprovalRequest {
-    let description = '';
-    let metadata: Record<string, unknown> = {};
-    if (row.metadata) {
-      try {
-        const parsed = JSON.parse(row.metadata);
-        description = parsed.description || '';
-        const { description: _d, ...rest } = parsed;
-        metadata = rest;
-      } catch {
-        description = '';
-      }
-    }
-    return {
-      id: row.id,
-      agentId: row.agentId,
-      action: row.action,
-      description,
-      riskLevel: row.riskLevel as RiskLevel,
-      status: row.status as ApprovalStatus,
-      metadata,
-      requestedAt: row.requestedAt instanceof Date ? row.requestedAt : new Date(row.requestedAt),
-      resolvedAt: row.resolvedAt ? (row.resolvedAt instanceof Date ? row.resolvedAt : new Date(row.resolvedAt)) : null,
-      resolver: row.resolver ?? null,
-    };
   }
 }

@@ -14,12 +14,6 @@ vi.mock('../registry/index.js', () => ({
   }),
 }));
 
-vi.mock('../db/index.js', () => ({
-  listIntegrations: vi.fn(() => []),
-  updateIntegration: vi.fn(),
-  getDb: vi.fn(),
-}));
-
 describe('Health Checker', () => {
   it('returns error for unknown integration', async () => {
     const { checkIntegrationHealth } = await import('../health/index.js');

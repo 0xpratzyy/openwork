@@ -6,7 +6,6 @@
 
 import { spawn } from 'node:child_process';
 import { getRegistryIntegration } from '../registry/index.js';
-import { listIntegrations, updateIntegration, getDb } from '../db/index.js';
 
 export interface HealthResult {
   status: 'healthy' | 'degraded' | 'error';
@@ -29,7 +28,6 @@ export async function checkIntegrationHealth(
     return { status: 'error', message: `Unknown integration: ${integrationId}`, checkedAt };
   }
 
-  // Check required config fields
   const missingFields = registry.configSchema
     .filter((f) => f.required && !config[f.field])
     .map((f) => f.field);
@@ -42,12 +40,10 @@ export async function checkIntegrationHealth(
     };
   }
 
-  // For MCP servers with npm packages, try to spawn and send initialize
   if (registry.npmPackage) {
     return checkMcpServer(registry.npmPackage, config, checkedAt);
   }
 
-  // For github repo-based servers, just validate config is present
   return {
     status: 'degraded',
     message: 'Config present but live check not available for repo-based servers',
@@ -82,7 +78,6 @@ async function checkMcpServer(
 
     child.stdout?.on('data', (data: Buffer) => {
       stdout += data.toString();
-      // Look for JSON-RPC response
       if (stdout.includes('"jsonrpc"')) {
         clearTimeout(timeout);
         child.kill();
@@ -102,7 +97,6 @@ async function checkMcpServer(
       }
     });
 
-    // Send JSON-RPC initialize request
     const initRequest = JSON.stringify({
       jsonrpc: '2.0',
       id: 1,
@@ -120,34 +114,4 @@ async function checkMcpServer(
       // stdin may not be writable
     }
   });
-}
-
-/**
- * Check all configured integrations and store results in the database.
- */
-export async function checkAllIntegrations(): Promise<Record<string, HealthResult>> {
-  const results: Record<string, HealthResult> = {};
-  const integrations = listIntegrations();
-
-  for (const integration of integrations) {
-    let config: Record<string, string> = {};
-    try {
-      config = integration.configEncrypted ? JSON.parse(integration.configEncrypted) : {};
-    } catch {
-      config = {};
-    }
-
-    const result = await checkIntegrationHealth(integration.type, config);
-    results[integration.id] = result;
-
-    // Update status in DB
-    const dbStatus = result.status === 'healthy' ? 'connected' : result.status === 'degraded' ? 'degraded' : 'error';
-    try {
-      updateIntegration(integration.id, { status: dbStatus });
-    } catch {
-      // DB update failed, continue
-    }
-  }
-
-  return results;
 }

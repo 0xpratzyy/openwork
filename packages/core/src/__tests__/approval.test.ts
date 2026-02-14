@@ -1,34 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ApprovalEngine } from '../approval/index.js';
-
-// Mock the DB functions
-vi.mock('../db/index.js', () => {
-  const store: Record<string, any> = {};
-  let counter = 0;
-  return {
-    dbCreateApproval: vi.fn((data: any) => {
-      const id = `ap-${++counter}`;
-      const row = { id, ...data, status: 'pending', requestedAt: new Date(), resolvedAt: null, resolver: null };
-      store[id] = row;
-      return row;
-    }),
-    getApproval: vi.fn((id: string) => store[id] || null),
-    listPendingApprovals: vi.fn(() => Object.values(store).filter((r: any) => r.status === 'pending')),
-    dbResolveApproval: vi.fn((id: string, status: string, resolver: string) => {
-      if (store[id]) {
-        store[id].status = status;
-        store[id].resolver = resolver;
-        store[id].resolvedAt = new Date();
-      }
-    }),
-    logAction: vi.fn(),
-  };
-});
+import { describe, it, expect, beforeEach } from 'vitest';
+import { ApprovalEngine, clearApprovals } from '../approval/index.js';
 
 describe('ApprovalEngine', () => {
   let engine: ApprovalEngine;
 
   beforeEach(() => {
+    clearApprovals();
     engine = new ApprovalEngine();
   });
 

@@ -48,13 +48,12 @@ describe('CLI Dependencies', () => {
   it('@openwork/core exports expected functions', async () => {
     const core = await import('@openwork/core');
     expect(typeof core.listAgents).toBe('function');
-    expect(typeof core.deleteAgent).toBe('function');
+    expect(typeof core.removeAgentFromConfig).toBe('function');
     expect(typeof core.dbCreateAgent).toBe('function');
     expect(typeof core.removeAgent).toBe('function');
-    expect(typeof core.removeAgentBinding).toBe('function');
+    expect(typeof core.removeAgentBindings).toBe('function');
     expect(typeof core.generateAgent).toBe('function');
-    expect(typeof core.deleteAllAgents).toBe('function');
-    expect(typeof core.deleteAllIntegrations).toBe('function');
+    expect(typeof core.removeAllAgents).toBe('function');
   });
 
   it('@openwork/agents exports expected functions', async () => {

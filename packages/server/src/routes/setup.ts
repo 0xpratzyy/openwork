@@ -1,11 +1,10 @@
 import { Router } from 'express';
 import { loadTemplate } from '@openwork/agents';
 import {
-  generateAgent, generateRouterAgent, dbCreateAgent, createIntegration,
-  patchConfig, listAgents, listIntegrations, deleteAllAgents, deleteAllIntegrations,
-  removeAgent, deleteAgent,
+  generateAgent, generateRouterAgent, dbCreateAgent,
+  patchConfig, listAgents, removeAgent, removeAllAgents,
 } from '@openwork/core';
-import type { AgentConfig, BindingConfig, GeneratedAgent } from '@openwork/core';
+import type { AgentEntry, BindingEntry, GeneratedAgent } from '@openwork/core';
 
 export const setupRouter = Router();
 
@@ -31,12 +30,11 @@ setupRouter.post('/', async (req, res) => {
 
     const createdAgents: Array<{ id: string; name: string; role: string; action: string }> = [];
     const generatedAgents: GeneratedAgent[] = [];
-    const agentConfigs: AgentConfig[] = [];
-    const bindingConfigs: BindingConfig[] = [];
+    const agentConfigs: Array<{ id: string; workspace?: string; [key: string]: unknown }> = [];
+    const bindingConfigs: BindingEntry[] = [];
 
-    // Check existing agents for reporting
     const existingAgents = listAgents();
-    const existingRoles = new Set(existingAgents.map((a: any) => a.role));
+    const existingRoles = new Set(existingAgents.map((a) => a.role));
 
     for (const roleId of body.roles) {
       const template = loadTemplate(roleId);
@@ -52,24 +50,13 @@ setupRouter.post('/', async (req, res) => {
         }
       }
 
-      // Upsert agent in DB
-      const dbAgent = dbCreateAgent({
+      dbCreateAgent({
         id: generated.id,
         role: roleId,
         name: generated.name,
         workspacePath: generated.workspacePath,
       });
       createdAgentIds.push(generated.id);
-
-      const roleIntegrations = body.integrations?.[roleId] ?? {};
-      for (const server of template.mcpServers) {
-        const config = roleIntegrations[server.id] ?? {};
-        createIntegration({
-          agentId: generated.id,
-          type: server.id,
-          configEncrypted: JSON.stringify(config),
-        });
-      }
 
       const action = existingRoles.has(roleId) ? 'updated' : 'created';
       agentConfigs.push({ id: generated.id, workspace: generated.workspacePath });
@@ -78,7 +65,6 @@ setupRouter.post('/', async (req, res) => {
       generatedAgents.push(generated);
     }
 
-    // Always create the router agent after all specialists
     let routerGenerated;
     try {
       routerGenerated = await generateRouterAgent(generatedAgents, { channel: 'slack' });
@@ -106,9 +92,8 @@ setupRouter.post('/', async (req, res) => {
     clearTimeout(setupTimeout);
     res.json({ success: true, agents: createdAgents });
   } catch (err) {
-    // Rollback partially created agents
     for (const id of createdAgentIds) {
-      try { deleteAgent(id); } catch { /* best effort */ }
+      try { removeAgent(id); } catch { /* best effort */ }
     }
     clearTimeout(setupTimeout);
     const message = err instanceof Error ? err.message : String(err);
@@ -118,22 +103,18 @@ setupRouter.post('/', async (req, res) => {
   }
 });
 
-// Reset endpoint — clears all agents and integrations
 setupRouter.post('/reset', async (_req, res) => {
   try {
     const agents = listAgents();
     const count = agents.length;
 
-    // Remove agent workspaces
     for (const agent of agents) {
       try {
         await removeAgent(agent.id);
       } catch { /* best effort */ }
     }
 
-    // Clear DB tables (integrations first due to FK)
-    deleteAllIntegrations();
-    deleteAllAgents();
+    removeAllAgents();
 
     res.json({ success: true, removed: count });
   } catch (err) {

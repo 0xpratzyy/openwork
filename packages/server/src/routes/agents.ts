@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { listAgents, deleteAgent, removeAgent } from '@openwork/core';
+import { listAgents, removeAgentFromConfig, removeAgent } from '@openwork/core';
 
 export const agentsRouter = Router();
 
@@ -15,13 +15,10 @@ agentsRouter.get('/', (_req, res) => {
 agentsRouter.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-
     // Remove workspace and OpenClaw config
     await removeAgent(id);
-
-    // Remove from DB
-    deleteAgent(id);
-
+    // Remove from openclaw.json
+    removeAgentFromConfig(id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: String(err) });
