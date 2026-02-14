@@ -66,8 +66,8 @@ setupRouter.post('/', async (req, res) => {
       }
 
       const action = existingRoles.has(roleId) ? 'updated' : 'created';
-      agentConfigs.push({ name: generated.id });
-      bindingConfigs.push({ agentId: generated.id, channel: 'slack' });
+      agentConfigs.push({ id: generated.id, workspace: generated.workspacePath });
+      bindingConfigs.push({ agentId: generated.id, match: { channel: 'slack' } });
       createdAgents.push({ id: generated.id, name: generated.name, role: roleId, action });
       generatedAgents.push(generated);
     }
@@ -90,8 +90,8 @@ setupRouter.post('/', async (req, res) => {
       workspacePath: routerGenerated.workspacePath,
     });
     createdAgentIds.push(routerGenerated.id);
-    agentConfigs.push({ name: routerGenerated.id });
-    bindingConfigs.push({ agentId: routerGenerated.id, channel: 'slack' });
+    agentConfigs.push({ id: routerGenerated.id, workspace: routerGenerated.workspacePath });
+    bindingConfigs.push({ agentId: routerGenerated.id, match: { channel: 'slack' } });
     const routerAction = existingRoles.has('router') ? 'updated' : 'created';
     createdAgents.push({ id: routerGenerated.id, name: routerGenerated.name, role: 'router', action: routerAction });
 

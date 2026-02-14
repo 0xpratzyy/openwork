@@ -13,14 +13,20 @@ const OPENCLAW_DIR = join(homedir(), '.openclaw');
 const CONFIG_PATH = join(OPENCLAW_DIR, 'openclaw.json');
 
 export interface AgentConfig {
-  name: string;
+  id: string;
+  workspace?: string;
+  agentDir?: string;
+  default?: boolean;
   [key: string]: unknown;
 }
 
 export interface BindingConfig {
   agentId: string;
-  channel: string;
-  matchRules?: Record<string, unknown>;
+  match: {
+    channel?: string;
+    peer?: { kind?: string; id?: string };
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 
@@ -61,11 +67,28 @@ function backupConfig(): void {
  * Validate config structure before writing.
  */
 function validateConfig(config: OpenClawConfig): void {
-  if (config.agents && config.agents.list && !Array.isArray(config.agents.list)) {
-    throw new Error('Invalid config: agents.list must be an array');
+  if (config.agents && config.agents.list) {
+    if (!Array.isArray(config.agents.list)) {
+      throw new Error('Invalid config: agents.list must be an array');
+    }
+    for (const agent of config.agents.list) {
+      if (!agent.id || typeof agent.id !== 'string') {
+        throw new Error(`Invalid config: agent missing "id" field: ${JSON.stringify(agent)}`);
+      }
+    }
   }
-  if (config.bindings && !Array.isArray(config.bindings)) {
-    throw new Error('Invalid config: bindings must be an array');
+  if (config.bindings) {
+    if (!Array.isArray(config.bindings)) {
+      throw new Error('Invalid config: bindings must be an array');
+    }
+    for (const binding of config.bindings) {
+      if (!binding.agentId) {
+        throw new Error(`Invalid config: binding missing "agentId": ${JSON.stringify(binding)}`);
+      }
+      if (!binding.match || typeof binding.match !== 'object') {
+        throw new Error(`Invalid config: binding missing "match" object: ${JSON.stringify(binding)}`);
+      }
+    }
   }
 }
 
@@ -90,18 +113,20 @@ export function patchConfig(agents: AgentConfig[], bindings: BindingConfig[]): v
   if (!config.agents.list) config.agents.list = [];
   if (!config.bindings) config.bindings = [];
 
-  // Merge agents — skip duplicates by name
-  const existingNames = new Set(config.agents.list.map((a) => a.name));
+  // Merge agents — skip duplicates by id
+  const existingIds = new Set(config.agents.list.map((a) => a.id));
   for (const agent of agents) {
-    if (!existingNames.has(agent.name)) {
+    if (!existingIds.has(agent.id)) {
       config.agents.list.push(agent);
     }
   }
 
-  // Merge bindings — skip duplicates by agentId+channel
-  const existingBindings = new Set(config.bindings.map((b) => `${b.agentId}:${b.channel}`));
+  // Merge bindings — skip duplicates by agentId + match.channel
+  const existingBindings = new Set(
+    config.bindings.map((b) => `${b.agentId}:${b.match?.channel || ''}`)
+  );
   for (const binding of bindings) {
-    const key = `${binding.agentId}:${binding.channel}`;
+    const key = `${binding.agentId}:${binding.match?.channel || ''}`;
     if (!existingBindings.has(key)) {
       config.bindings.push(binding);
     }
@@ -117,10 +142,15 @@ export function addAgentBinding(agentId: string, channel: string, matchRules?: R
   const config = getConfig();
   if (!config.bindings) config.bindings = [];
 
-  const exists = config.bindings.some((b) => b.agentId === agentId && b.channel === channel);
+  const exists = config.bindings.some(
+    (b) => b.agentId === agentId && b.match?.channel === channel
+  );
   if (exists) return;
 
-  config.bindings.push({ agentId, channel, ...(matchRules ? { matchRules } : {}) });
+  config.bindings.push({
+    agentId,
+    match: { channel, ...(matchRules || {}) },
+  });
   writeConfig(config);
 }
 
