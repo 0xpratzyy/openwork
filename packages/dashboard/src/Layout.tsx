@@ -1,9 +1,10 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Bot, Plug, ShieldCheck, ListTodo, Activity, Settings } from 'lucide-react';
+import { Home, Plug, Bot, ShieldCheck, ListTodo, Activity, Settings, BookOpen } from 'lucide-react';
 
 const links = [
-  { to: '/agents', label: 'Agents', icon: Bot },
+  { to: '/', label: 'Home', icon: Home },
   { to: '/integrations', label: 'Integrations', icon: Plug },
+  { to: '/agents', label: 'Agents', icon: Bot },
   { to: '/approvals', label: 'Approvals', icon: ShieldCheck },
   { to: '/tasks', label: 'Tasks', icon: ListTodo },
   { to: '/activity', label: 'Activity', icon: Activity },
@@ -11,6 +12,7 @@ const links = [
 ];
 
 const pageTitle: Record<string, string> = {
+  '/': 'Home',
   '/agents': 'Agents',
   '/integrations': 'Integrations',
   '/approvals': 'Approvals',
@@ -38,6 +40,7 @@ export default function Layout() {
             <NavLink
               key={l.to}
               to={l.to}
+              end={l.to === '/'}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                   isActive
@@ -51,6 +54,18 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
+        <div className="p-4 border-t border-dark-border">
+          <a
+            href="https://github.com/nicepkg/openwork"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-xs text-gray-600 hover:text-gray-400 transition-colors"
+          >
+            <BookOpen className="w-3 h-3" />
+            Docs
+          </a>
+          <p className="text-xs text-gray-700 mt-1">v0.1.0</p>
+        </div>
       </aside>
 
       {/* Main Content */}

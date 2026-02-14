@@ -1,5 +1,5 @@
 import { Code, Megaphone, DollarSign, Headphones, Settings, Loader2 } from 'lucide-react';
-import type { Role } from '../types';
+import type { Role } from '../../types';
 
 const ROLE_ICONS: Record<string, typeof Code> = {
   engineering: Code,

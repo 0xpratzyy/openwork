@@ -33,14 +33,15 @@ export interface Role {
   tools: string[];
 }
 
-export interface WizardState {
-  step: number;
-  status: { openclawRunning: boolean; agentCount: number; integrationCount: number } | null;
-  roles: Role[];
-  selectedRoles: Set<string>;
-  integrationConfigs: Record<string, Record<string, Record<string, string>>>;
-  progressMessages: string[];
-  progressDone: boolean;
-  createdAgents: Array<{ id: string; name: string; role: string }>;
-  error: string | null;
+export interface RegistryIntegration {
+  id: string;
+  name: string;
+  description: string;
+  npmPackage?: string;
+  transport?: string;
+  configSchema?: ConfigField[];
+  tools?: McpTool[];
+  categories: string[];
+  status?: 'verified' | 'community' | 'beta';
+  stars?: number;
 }

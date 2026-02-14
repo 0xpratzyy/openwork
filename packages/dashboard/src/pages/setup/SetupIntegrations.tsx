@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, Eye, EyeOff, CheckCircle, Package, Zap, Shield, Star, ExternalLink } from 'lucide-react';
-import type { Role, RoleIntegration } from '../types';
+import type { Role, RoleIntegration } from '../../types';
 
 interface Props {
   roles: Role[];
@@ -18,7 +18,7 @@ const roleIcons: Record<string, string> = {
   ops: '📊',
 };
 
-export default function Integrations({ roles, configs, onConfigChange, onBack, onNext }: Props) {
+export default function SetupIntegrations({ roles, configs, onConfigChange, onBack, onNext }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set(roles.map((r) => r.id)));
 
   const toggleExpand = (id: string) => {

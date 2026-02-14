@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
 import Layout from './Layout';
+import Home from './pages/Home';
+import SetupWizard from './pages/setup/SetupWizard';
 import Agents from './pages/Agents';
 import Integrations from './pages/Integrations';
 import Approvals from './pages/Approvals';
@@ -14,8 +16,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
+        <Route path="/setup" element={<SetupWizard />} />
         <Route element={<Layout />}>
-          <Route path="/" element={<Navigate to="/agents" />} />
+          <Route path="/" element={<Home />} />
           <Route path="/agents" element={<Agents />} />
           <Route path="/integrations" element={<Integrations />} />
           <Route path="/approvals" element={<Approvals />} />

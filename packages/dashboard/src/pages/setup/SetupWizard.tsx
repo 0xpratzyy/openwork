@@ -1,17 +1,29 @@
 import { useState, useCallback } from 'react';
-import type { WizardState, Role } from './types';
-import { api } from './api';
-import Stepper from './components/Stepper';
-import Welcome from './pages/Welcome';
-import Roles from './pages/Roles';
-import Integrations from './pages/Integrations';
-import Review from './pages/Review';
-import Progress from './pages/Progress';
-import Done from './pages/Done';
+import type { Role } from '../../types';
+import { api } from '../../api';
+import Stepper from './Stepper';
+import Welcome from './Welcome';
+import Roles from './Roles';
+import SetupIntegrations from './SetupIntegrations';
+import Review from './Review';
+import Progress from './Progress';
+import Done from './Done';
+
+interface WizardState {
+  step: number;
+  status: { openclawRunning: boolean; agentCount: number; integrationCount: number; agents?: any[] } | null;
+  roles: Role[];
+  selectedRoles: Set<string>;
+  integrationConfigs: Record<string, Record<string, Record<string, string>>>;
+  progressMessages: string[];
+  progressDone: boolean;
+  createdAgents: Array<{ id: string; name: string; role: string }>;
+  error: string | null;
+}
 
 const STEP_LABELS = ['Welcome', 'Select Roles', 'Integrations', 'Review', 'Setup', 'Done'];
 
-export default function App() {
+export default function SetupWizard() {
   const [state, setState] = useState<WizardState>({
     step: 0,
     status: null,
@@ -123,7 +135,7 @@ export default function App() {
             />
           )}
           {state.step === 2 && (
-            <Integrations
+            <SetupIntegrations
               roles={selectedRolesData}
               configs={state.integrationConfigs}
               onConfigChange={setIntegrationConfig}

@@ -11,7 +11,6 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "setup": "node packages/cli/dist/index.js setup",
     "start": "node packages/cli/dist/index.js start",
     "status": "node packages/cli/dist/index.js status",
     "agents": "node packages/cli/dist/index.js agents",

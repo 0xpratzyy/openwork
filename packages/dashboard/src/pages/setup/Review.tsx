@@ -1,5 +1,5 @@
 import { Layers, Plug } from 'lucide-react';
-import type { Role } from '../types';
+import type { Role } from '../../types';
 
 interface Props {
   roles: Role[];

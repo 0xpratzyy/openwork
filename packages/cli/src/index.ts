@@ -40,7 +40,6 @@ function clearPid() {
   try { unlinkSync(PID_FILE); } catch { /* ignore */ }
 }
 
-// Trick to get mkdirSync without top-level await issue
 function await_import_fs() {
   return { mkdirSync: require('fs').mkdirSync };
 }
@@ -55,61 +54,31 @@ function askConfirmation(question: string): Promise<boolean> {
   });
 }
 
+function openBrowser(url: string) {
+  try {
+    const platform = process.platform;
+    if (platform === 'darwin') execSync(`open ${url}`);
+    else if (platform === 'win32') execSync(`start ${url}`);
+    else execSync(`xdg-open ${url}`);
+  } catch {
+    console.log(chalk.yellow(`Could not open browser. Visit: ${url}`));
+  }
+}
+
 program
   .name('openwork')
   .description('OpenWork — open-source multi-agent AI coworker for teams')
   .version('0.1.0');
 
-// ── setup ──
-program
-  .command('setup')
-  .description('Launch the setup wizard to configure your AI team')
-  .action(async () => {
-    // Check if already running
-    const existingPid = readPid();
-    if (existingPid && isProcessAlive(existingPid)) {
-      console.log(chalk.yellow(`Server already running (PID ${existingPid}). Opening wizard...`));
-    } else {
-      const spinner = ora('Starting OpenWork server...').start();
-      try {
-        const server = spawn('node', [require.resolve('@openwork/server/dist/index.js')], {
-          stdio: 'ignore',
-          detached: true,
-        });
-        server.unref();
-
-        if (server.pid) writePid(server.pid);
-
-        await new Promise((r) => setTimeout(r, 1500));
-        spinner.succeed(`Server started on http://localhost:18800 (PID ${server.pid})`);
-      } catch (err) {
-        spinner.fail('Failed to start server');
-        console.error(chalk.red(err instanceof Error ? err.message : String(err)));
-        process.exit(1);
-      }
-    }
-
-    console.log(chalk.cyan('\n🚀 Opening setup wizard in your browser...\n'));
-
-    const url = 'http://localhost:18800/setup';
-    try {
-      const platform = process.platform;
-      if (platform === 'darwin') execSync(`open ${url}`);
-      else if (platform === 'win32') execSync(`start ${url}`);
-      else execSync(`xdg-open ${url}`);
-    } catch {
-      console.log(chalk.yellow(`Could not open browser. Visit: ${url}`));
-    }
-  });
-
 // ── start ──
 program
   .command('start')
-  .description('Start the OpenWork server (dashboard mode)')
+  .description('Start the OpenWork server and open dashboard')
   .action(async () => {
     const existingPid = readPid();
     if (existingPid && isProcessAlive(existingPid)) {
-      console.log(chalk.yellow(`Server already running (PID ${existingPid}). Use 'openwork stop' first.`));
+      console.log(chalk.yellow(`Server already running (PID ${existingPid}). Opening dashboard...`));
+      openBrowser('http://localhost:18800');
       return;
     }
 
@@ -117,6 +86,7 @@ program
     try {
       const serverPath = require.resolve('@openwork/server/dist/index.js');
       writePid(process.pid);
+      openBrowser('http://localhost:18800');
       await import(serverPath);
     } catch (err) {
       clearPid();
@@ -158,7 +128,6 @@ program
   .action(async () => {
     console.log(chalk.bold('\n📊 OpenWork Status\n'));
 
-    // Check server
     const pid = readPid();
     if (pid && isProcessAlive(pid)) {
       console.log(chalk.green(`  ✓ Server: running (PID ${pid})`));
@@ -167,7 +136,6 @@ program
       if (pid) clearPid();
     }
 
-    // Check OpenClaw
     try {
       const version = execSync('openclaw --version', { stdio: 'pipe' }).toString().trim();
       console.log(chalk.green(`  ✓ OpenClaw: ${version}`));
@@ -175,7 +143,6 @@ program
       console.log(chalk.red('  ✗ OpenClaw: not found'));
     }
 
-    // Check gateway
     try {
       execSync('openclaw gateway status', { stdio: 'pipe' });
       console.log(chalk.green('  ✓ Gateway: running'));
@@ -183,7 +150,6 @@ program
       console.log(chalk.yellow('  ⚠ Gateway: not running'));
     }
 
-    // List agents from DB
     try {
       const { listAgents } = await import('@openwork/core');
       const agents = listAgents();
@@ -193,7 +159,7 @@ program
         console.log(`    ${statusIcon} ${agent.name} (${agent.role}) — ${agent.status}`);
       }
       if (agents.length === 0) {
-        console.log(chalk.gray('    No agents configured. Run: openwork setup'));
+        console.log(chalk.gray('    No agents configured. Run: openwork start'));
       }
     } catch {
       console.log(chalk.gray('    Could not read agent database'));
@@ -258,8 +224,7 @@ agentsCmd
 
       if (agents.length === 0) {
         console.log(chalk.gray('\nNo agents configured yet.'));
-        console.log(chalk.gray('Add one with: openwork agents add <role>\n'));
-        console.log(chalk.gray('Available roles: engineering, marketing, sales, support, ops'));
+        console.log(chalk.gray('Run: openwork start\n'));
         return;
       }
 

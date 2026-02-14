@@ -1,9 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Command } from 'commander';
 
-// We test that the CLI structure is correct by creating a similar program
-// We can't easily test the actual index.ts since it calls program.parse() at module level
-
 describe('CLI Structure', () => {
   it('commander is importable', () => {
     const program = new Command();
@@ -13,7 +10,6 @@ describe('CLI Structure', () => {
   it('can define openwork commands', () => {
     const program = new Command();
     program.name('openwork').version('0.1.0');
-    program.command('setup').description('Setup wizard');
     program.command('start').description('Start server');
     program.command('status').description('Show status');
     const agents = program.command('agents').description('Manage agents');
@@ -25,7 +21,6 @@ describe('CLI Structure', () => {
     program.command('reset').description('Reset all');
 
     const cmds = program.commands.map(c => c.name());
-    expect(cmds).toContain('setup');
     expect(cmds).toContain('start');
     expect(cmds).toContain('stop');
     expect(cmds).toContain('reset');
@@ -51,7 +46,6 @@ describe('CLI Structure', () => {
 
 describe('CLI Dependencies', () => {
   it('@openwork/core exports expected functions', async () => {
-    // We just check the module shape without actually calling DB functions
     const core = await import('@openwork/core');
     expect(typeof core.listAgents).toBe('function');
     expect(typeof core.deleteAgent).toBe('function');

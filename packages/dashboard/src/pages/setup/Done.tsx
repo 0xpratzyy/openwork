@@ -68,7 +68,7 @@ export default function Done({ agents }: Props) {
 
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
         <a
-          href="/dashboard"
+          href="/"
           className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium hover:from-indigo-400 hover:to-purple-500"
         >
           <ExternalLink size={16} />
