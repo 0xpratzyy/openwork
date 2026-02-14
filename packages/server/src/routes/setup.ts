@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { loadTemplate } from '@openwork/agents';
-import { generateAgent, dbCreateAgent, createIntegration, patchConfig } from '@openwork/core';
-import type { AgentConfig, BindingConfig } from '@openwork/core';
+import { generateAgent, generateRouterAgent, dbCreateAgent, createIntegration, patchConfig } from '@openwork/core';
+import type { AgentConfig, BindingConfig, GeneratedAgent } from '@openwork/core';
 
 export const setupRouter = Router();
 
@@ -19,6 +19,7 @@ setupRouter.post('/', async (req, res) => {
     }
 
     const createdAgents: Array<{ id: string; name: string; role: string }> = [];
+    const generatedAgents: GeneratedAgent[] = [];
     const agentConfigs: AgentConfig[] = [];
     const bindingConfigs: BindingConfig[] = [];
 
@@ -60,7 +61,29 @@ setupRouter.post('/', async (req, res) => {
       agentConfigs.push({ name: generated.id });
       bindingConfigs.push({ agentId: generated.id, channel: 'slack' });
       createdAgents.push({ id: generated.id, name: generated.name, role: roleId });
+      generatedAgents.push(generated);
     }
+
+    // Always create the router agent after all specialists
+    let routerGenerated;
+    try {
+      routerGenerated = await generateRouterAgent(generatedAgents, { channel: 'slack' });
+    } catch (err: any) {
+      if (err.message?.includes('already exists')) {
+        routerGenerated = await generateRouterAgent(generatedAgents, { channel: 'slack' }, { skipCreate: true });
+      } else {
+        throw err;
+      }
+    }
+    dbCreateAgent({
+      id: routerGenerated.id,
+      role: 'router',
+      name: routerGenerated.name,
+      workspacePath: routerGenerated.workspacePath,
+    });
+    agentConfigs.push({ name: routerGenerated.id });
+    bindingConfigs.push({ agentId: routerGenerated.id, channel: 'slack' });
+    createdAgents.push({ id: routerGenerated.id, name: routerGenerated.name, role: 'router' });
 
     // Patch openclaw.json
     patchConfig(agentConfigs, bindingConfigs);
