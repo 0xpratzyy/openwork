@@ -48,7 +48,9 @@ integrationsRouter.post('/:id/configure', (req, res) => {
 
     if ((registry as any).isChannel) {
       // Channel integration — write to openclaw.json channels section
-      setChannel(id, config);
+      // Add OpenClaw-required defaults for Slack
+      const channelConfig = id === 'slack' ? { mode: 'socket', ...config } : config;
+      setChannel(id, channelConfig);
       res.json({ success: true, type: 'channel', message: `${registry.name} channel configured. Restart the gateway to apply.` });
       return;
     }

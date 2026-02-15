@@ -191,8 +191,7 @@
     "isChannel": true,
     "configSchema": [
       { "field": "botToken", "label": "Slack Bot Token", "type": "password", "required": true, "placeholder": "xoxb-..." },
-      { "field": "appToken", "label": "Slack App Token", "type": "password", "required": true, "placeholder": "xapp-..." },
-      { "field": "teamId", "label": "Slack Team ID", "type": "text", "required": true, "placeholder": "T0123456789" }
+      { "field": "appToken", "label": "Slack App Token", "type": "password", "required": true, "placeholder": "xapp-..." }
     ],
     "tools": [
       { "name": "slack_post_message", "description": "Post a message to a channel" },
